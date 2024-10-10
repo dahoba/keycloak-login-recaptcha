@@ -8,6 +8,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
 import org.jboss.logging.Logger;
 import org.keycloak.authentication.AuthenticationFlowContext;
+import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.authentication.authenticators.browser.UsernamePasswordForm;
 import org.keycloak.connections.httpclient.HttpClientProvider;
@@ -20,12 +21,12 @@ import org.keycloak.services.messages.Messages;
 import org.keycloak.services.validation.Validation;
 import org.keycloak.util.JsonSerialization;
 
-import javax.ws.rs.core.MultivaluedMap;
-import javax.ws.rs.core.Response;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 import java.io.InputStream;
 import java.util.*;
 
-public class RecaptchaUsernamePasswordForm extends UsernamePasswordForm implements Authenticator{
+public class RecaptchaUsernamePasswordForm extends UsernamePasswordForm {
 	public static final String G_RECAPTCHA_RESPONSE = "g-recaptcha-response";
 	public static final String SITE_KEY = "site.key";
 	public static final String SITE_SECRET = "secret";
@@ -84,12 +85,17 @@ public class RecaptchaUsernamePasswordForm extends UsernamePasswordForm implemen
 
 			success = validateRecaptcha(context, success, captcha, secret);
 		}
+
+		logger.debugv("validateRecaptcha {0}",success );
+
 		if (success) {
 			super.action(context);
 		} else {
 			errors.add(new FormMessage(null, Messages.RECAPTCHA_FAILED));
 			formData.remove(G_RECAPTCHA_RESPONSE);
-//			 context.error(Errors.INVALID_REGISTRATION);
+			Response challengeResponse = challenge(context, formData);			
+			context.failureChallenge(AuthenticationFlowError.INVALID_USER, challengeResponse);
+			// context.error(Errors.INVALID_REGISTRATION);
 			// context.validationError(formData, errors);
 			// context.excludeOtherErrors();
 			return;
