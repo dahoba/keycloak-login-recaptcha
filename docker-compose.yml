@@ -2,7 +2,7 @@ version: '3'
 
 services:
   keycloak:
-    image: jboss/keycloak
+    image: quay.io/keycloak/keycloak:24.0.5
     restart: always
     environment:
       KEYCLOAK_USER: admin
@@ -10,7 +10,7 @@ services:
       KEYCLOAK_IMPORT: /tmp/playground-realm.json
     volumes:
       - ./playground-realm.json:/tmp/playground-realm.json
-      - ./login.ftl:/opt/jboss/keycloak/themes/base/login/login.ftl
-      - ./target/recaptcha-login.jar:/opt/jboss/keycloak/standalone/deployments/recaptcha-login.jar
+      - ./src/main/resources/themes/recaptcha:/opt/keycloak/themes/recaptcha
+      - ./target/recaptcha-login.jar:/opt/keycloak/providers/recaptcha-login.jar
     ports:
       - 8080:8080
